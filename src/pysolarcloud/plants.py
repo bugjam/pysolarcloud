@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from . import AbstractAuth, PySolarCloudException, _LOGGER
 
 class Plants:
@@ -78,6 +79,72 @@ class Plants:
             data_as_dict = {d["code"]: d for d in data}
             plants[str(plant["ps_id"])] = data_as_dict
         _LOGGER.debug("async_get_realtime_data: %s", plants)
+        return plants
+
+    async def async_get_historical_data(self, plant_id: str | list[str], start_time: datetime, end_time: datetime = None, *, measure_points=None, interval=timedelta(minutes=60)) -> dict:
+        """Return historical data from one or more plants.
+        
+        plant_id: str | list[str] - The ID of the plant or a list of plant IDs.
+        start_time: datetime - The start time of the data to retrieve.
+        end_time: datetime - The end time of the data to retrieve. If end_time is not specified, 3 hours of data is returned.
+        measure_points: list[str] - A list of measure points to return. If None, all measure points are returned.
+        interval: timedelta - The interval in minutes between data points. The minimum interval is 1 minute. Default is 60 minutes.
+        Data is returned as a dictionary of lists:
+        {
+            plant_id: [
+                {
+                    "timestamp": datetime,
+                    "id": str, # Numerical identifier of the measure point
+                    "code": str, # Readable code of the measure point (see measure_points dict)
+                    "value": float | str,
+                    "unit": str,
+                    "name": str, # Name of the measure point (in the specified language)
+                }
+            ]
+        }
+        """
+        if isinstance(plant_id, list):
+            ps = str(plant_id)
+        else:
+            ps = [plant_id]
+        if measure_points is None:
+            ms = list(self.measure_points.keys())
+        else:
+            measure_points_map = {v: k for k, v in self.measure_points.items()}
+            ms = [m if m.isdigit() else measure_points_map[m] for m in measure_points]
+        if end_time is None:
+            end_time = start_time + timedelta(hours=3)
+        TS_FORMAT = "%Y%m%d%H%M%S"
+        uri = "/openapi/platform/getPowerStationPointMinuteDataList"
+        params = {
+            "ps_id_list": ps, 
+            "points": ",".join(["p"+m for m in ms]), 
+            "is_get_point_dict": "1",
+            "start_time_stamp": start_time.strftime(TS_FORMAT),
+            "end_time_stamp": end_time.strftime(TS_FORMAT),
+            "minute_interval": str(interval.seconds // 60),
+        }
+        res = await self.auth.request(uri, params, lang=self.lang)
+        res = await res.json()
+        if res.get("result_code") != "1":
+            _LOGGER.error("Error response from %s: %s", uri, res)
+            raise PySolarCloudException(res)
+        point_dict = dict([(str(point["point_id"]), point) for point in res["result_data"]["point_dict"]])
+        plants = {}
+        for plant_id, plant in res["result_data"].items():
+            if plant_id == "point_dict":
+                continue
+            series = []
+            for frame in plant:
+                data = {}
+                for k,v in frame.items():
+                    if k == "time_stamp":
+                        data["timestamp"] = datetime.strptime(v, TS_FORMAT)
+                    else:
+                        data |= self._format_measure_point(k[1:], v, point_dict)
+                series.append(data)
+            plants[str(plant_id)] = series
+        _LOGGER.debug("async_get_historical_data: %s", plants)
         return plants
     
     def _format_measure_point(self, point_id: str, point_value: str, point_dict: dict) -> dict:
