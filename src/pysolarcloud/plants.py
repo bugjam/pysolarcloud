@@ -137,12 +137,14 @@ class Plants:
             series = []
             for frame in plant:
                 data = {}
+                ts = datetime.strptime(frame["time_stamp"], TS_FORMAT)
                 for k,v in frame.items():
                     if k == "time_stamp":
-                        data["timestamp"] = datetime.strptime(v, TS_FORMAT)
+                        continue
                     else:
-                        data |= self._format_measure_point(k[1:], v, point_dict)
-                series.append(data)
+                        data = self._format_measure_point(k[1:], v, point_dict)
+                        data["timestamp"] = ts
+                    series.append(data)
             plants[str(plant_id)] = series
         _LOGGER.debug("async_get_historical_data: %s", plants)
         return plants
