@@ -7,6 +7,7 @@ The current version has only very basic functionality:
 * Getting a list plants
 * Getting details of a plant
 * Getting "real-time" data of a plant (Data is updated every 5 minutes according to Sungrow's documentation)
+* Getting historical data
 
 ## Quirks
 The iSolarCloud API is quite new and not very mature. Some tips:
