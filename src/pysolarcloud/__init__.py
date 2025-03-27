@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from enum import StrEnum
 import logging
 import time
+from urllib.parse import quote_plus
 
 from aiohttp import ClientResponse, ClientSession
 
@@ -35,14 +36,18 @@ class AbstractAuth(ABC):
         """Return the URL to authorize the user."""
         match self.host:
             case Server.China.value:
+                auth_server = "web3.isolarcloud.com"
                 cloud_id = 1
             case Server.International.value:
+                auth_server = "web3.isolarcloud.com.hk"
                 cloud_id = 2
             case Server.Europe.value:
+                auth_server = "web3.isolarcloud.eu"
                 cloud_id = 3
             case Server.Australia.value:
-                cloud_id = 4
-        return f"https://web3.isolarcloud.eu/#/authorized-app?cloudId={cloud_id}&applicationId={self.app_id}&redirectUrl={redirect_uri}"
+                auth_server = "auweb3.isolarcloud.com"
+                cloud_id = 7
+        return f"https://{auth_server}/#/authorized-app?cloudId={cloud_id}&applicationId={self.app_id}&redirectUrl={quote_plus(redirect_uri)}"
 
     @abstractmethod
     async def async_get_access_token(self) -> str:
