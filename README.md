@@ -6,6 +6,7 @@ The current version has only very basic functionality:
 * OAuth2 authentication
 * Getting a list plants
 * Getting details of a plant
+* Getting devices of a plant
 * Getting "real-time" data of a plant (Data is updated every 5 minutes according to Sungrow's documentation)
 * Getting historical data
 
