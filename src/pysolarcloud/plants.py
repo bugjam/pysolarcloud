@@ -2,6 +2,56 @@ from datetime import datetime, timedelta
 from enum import Enum
 from . import AbstractAuth, PySolarCloudException, _LOGGER
 
+class DeviceType(Enum):
+    """Enum for the device types used by async_get_plant_devices."""
+    INVERTER = 1
+    CONTAINER = 2
+    GRID_CONNECTION_POINT = 3
+    COMBINER_BOX = 4
+    METEO_STATION = 5
+    TRANSFORMER = 6
+    METER = 7
+    UPS = 8
+    DATA_LOGGER = 9
+    STRING = 10
+    PLANT = 11
+    CIRCUIT_PROTECTION = 12
+    SPLITTING_DEVICE = 13
+    ENERGY_STORAGE_SYSTEM = 14
+    SAMPLING_DEVICE = 15
+    EMU = 16
+    UNIT = 17
+    TEMPERATURE_AND_HUMIDITY_SENSOR = 18
+    INTELLIGENT_POWER_DISTRIBUTION_CABINET = 19
+    DISPLAY_DEVICE = 20
+    AC_POWER_DISTRIBUTED_CABINET = 21
+    COMMUNICATION_MODULE = 22
+    SYSTEM_BMS = 23
+    ARRAY_BMS = 24
+    DC_DC = 25
+    ENERGY_MANAGEMENT_SYSTEM = 26
+    TRACKING_SYSTEM = 27
+    WIND_ENERGY_CONVERTER = 28
+    SVG = 29
+    PT_CABINET = 30
+    BUS_PROTECTION = 31
+    CLEANING_DEVICE = 32
+    DIRECT_CURRENT_CABINET = 33
+    PUBLIC_MEASUREMENT_AND_CONTROL = 34
+    ENERGY_STORAGE_SYSTEM_2 = 37
+    BATTERY = 43
+    BATTERY_CLUSTER_MANAGEMENT_UNIT = 44
+    LOCAL_CONTROLLER = 45
+    BATTERY_SYSTEM_CONTROLLER = 52
+
+
+class DeviceFaultStaus(Enum):
+    """Enum for the device fault status used by async_get_plant_devices."""
+    FAULT = 1
+    ALARM = 2
+    NORMAL = 4
+
+
 class Plants:
     """Class to interact with the plants API."""
 
@@ -40,10 +90,13 @@ class Plants:
         _LOGGER.debug("async_get_plant_details: %s", plants)
         return plants
 
-    async def async_get_plant_devices(self, plant_id: str) -> list[dict]:
+    async def async_get_plant_devices(self, plant_id: str, *, device_types: list[DeviceType | int] = []) -> list[dict]:
         """Return details about the devices for a plant."""
         uri = "/openapi/platform/getDeviceListByPsId"
-        res = await self.auth.request(uri, {"ps_id": plant_id, "page": 1, "size": 100})
+        params = {"ps_id": plant_id, "page": 1, "size": 100}
+        if device_types:
+            params["device_type_list"] = [str(d.value) if isinstance(d, DeviceType) else str(d) for d in device_types]
+        res = await self.auth.request(uri, params)
         res.raise_for_status()
         data = await res.json()
         if "error" in data:
@@ -258,49 +311,3 @@ class Plants:
         "83334": "energy_storage_soc_ems", # 
         "83335": "energy_storage_remaining_charge_ems", # Wh
     }
-
-class DeviceType(Enum):
-    INVERTER = 1
-    CONTAINER = 2
-    GRID_CONNECTION_POINT = 3
-    COMBINER_BOX = 4
-    METEO_STATION = 5
-    TRANSFORMER = 6
-    METER = 7
-    UPS = 8
-    DATA_LOGGER = 9
-    STRING = 10
-    PLANT = 11
-    CIRCUIT_PROTECTION = 12
-    SPLITTING_DEVICE = 13
-    ENERGY_STORAGE_SYSTEM = 14
-    SAMPLING_DEVICE = 15
-    EMU = 16
-    UNIT = 17
-    TEMPERATURE_AND_HUMIDITY_SENSOR = 18
-    INTELLIGENT_POWER_DISTRIBUTION_CABINET = 19
-    DISPLAY_DEVICE = 20
-    AC_POWER_DISTRIBUTED_CABINET = 21
-    COMMUNICATION_MODULE = 22
-    SYSTEM_BMS = 23
-    ARRAY_BMS = 24
-    DC_DC = 25
-    ENERGY_MANAGEMENT_SYSTEM = 26
-    TRACKING_SYSTEM = 27
-    WIND_ENERGY_CONVERTER = 28
-    SVG = 29
-    PT_CABINET = 30
-    BUS_PROTECTION = 31
-    CLEANING_DEVICE = 32
-    DIRECT_CURRENT_CABINET = 33
-    PUBLIC_MEASUREMENT_AND_CONTROL = 34
-    ENERGY_STORAGE_SYSTEM_2 = 37
-    BATTERY = 43
-    BATTERY_CLUSTER_MANAGEMENT_UNIT = 44
-    LOCAL_CONTROLLER = 45
-    BATTERY_SYSTEM_CONTROLLER = 52
-
-class DeviceFaultStaus(Enum):
-    FAULT = 1
-    ALARM = 2
-    NORMAL = 4
