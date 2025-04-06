@@ -2,13 +2,14 @@
 
 A Python package to interact with the [iSolarCloud API](https://developer-api.isolarcloud.com/) by Sungrow.
 
-The current version has only very basic functionality:
+The package supports the following functionality:
 * OAuth2 authentication
 * Getting a list plants
 * Getting details of a plant
 * Getting devices of a plant
 * Getting "real-time" data of a plant (Data is updated every 5 minutes according to Sungrow's documentation)
 * Getting historical data
+* Getting and updating grid control settings
 
 ## Quirks
 The iSolarCloud API is quite new and not very mature. Some tips:
@@ -63,11 +64,25 @@ plant_list = await plants_api.async_get_plants()
 
 The `Auth` class keeps the access between calls and refreshes it when needed. If you prefer to manage this state yourself, you can create your own subclass of `AbstractAuth`.
 
+## Grid Control
+
+The `Control` class enables retrieving and updating grid control settings. Parameters and value sets are documented in the iSolarCloud Developer portal.
+
+### Example
+
+```python
+from pysolarcloud.control import Control
+devices = await plants_api.async_get_plant_devices(plant_id, device_types=[DeviceType.ENERGY_STORAGE_SYSTEM])
+device_uuid = devices[0]["uuid"]
+control_api = Control(auth)
+# Fetch current config
+current_settings = await control_api.async_read_parameters(device_uuid)
+print(current_settings)
+# Make an update
+await control_api.async_update_parameters(device_uuid, { "charge_discharge_command": "Charge" })
+```
+
 # Contributions
 Ideas or contributions are welcome. I am not afiliated with Sungrow, I'm just another user of the API. My main use case will be a HomeAssistant integration based on this package.
-
-I don't currently have a need for the Grid Control APIs and I might not be able to test them on my own plant[^1] - but let me know if you are interested.
-
-[^1]: because it's controlled by [Heartbeat](https://1komma5.com/en/offer/energymanager-heartbeat/)
 
 Enjoy!

@@ -138,8 +138,14 @@ class Auth(AbstractAuth):
 
 class PySolarCloudException(Exception):
     """Exception class raised by PySolarCloud when communication with the iSolarCloud service fails."""
-    def __init__(self, err: dict):
-        super().__init__(err["error"])
-        self.error = err["error"]
-        self.error_description = err["error_description"]
-        self.req_serial_num = err.get("req_serial_num", None)
+    def __init__(self, err: dict|str):
+        if isinstance(err, dict):
+            super().__init__(err["error"])
+            self.error = err["error"]
+            self.error_description = err.get("error_description")
+            self.req_serial_num = err.get("req_serial_num", None)
+        else:
+            super().__init__(err)
+            self.error = err
+            self.error_description = None
+            self.req_serial_num = None
