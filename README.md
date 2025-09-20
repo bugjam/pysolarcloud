@@ -77,7 +77,9 @@ for plant in plant_details:
 print("\nFetching real-time data for each plant...\n")
 real_time_data = await plants_api.async_get_realtime_data(plant_ids)
 for plant_id, data in real_time_data.items():
-   print(f"Real-time data for Plant ID {plant_id}: {data}")
+   # Print only the data points where value is not None
+   data_values = {k: v for k, v in data.items() if v and v.get("value") is not None}
+   print(f"Real-time data for Plant ID {plant_id}: {data_values}")
 ```
 
 The `Auth` class keeps the access between calls and refreshes it when needed. If you prefer to manage this state yourself, you can create your own subclass of `AbstractAuth`.
