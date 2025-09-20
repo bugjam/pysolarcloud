@@ -51,7 +51,7 @@ app_id = "your app id"
 redirect_uri = "your redirect uri"
 
 auth = Auth(Server.Europe, app_key, secret_key, app_id)
-url = Auth.auth_url(redirect_uri)
+url = auth.auth_url(redirect_uri)
 ```
 1. Redirect user to `url`
 2. User selects plant(s) and grants authorisation
@@ -60,6 +60,24 @@ url = Auth.auth_url(redirect_uri)
 await auth.async_authorize(code, redirect_uri)
 plants_api = Plants(auth)
 plant_list = await plants_api.async_get_plants()
+if plant_list:
+   print(f"{len(plant_list)} plants found:")
+   for plant in plant_list:
+         print(f"Plant ID: {plant["ps_id"]}, Name: {plant["ps_name"]}")
+else:
+   print("No plants found.")
+   return
+
+print("\nFetching detailed information for each plant...\n")
+plant_ids = [str(plant["ps_id"]) for plant in plant_list]
+plant_details = await plants_api.async_get_plant_details(plant_ids)
+for plant in plant_details:
+   print(f"Details for Plant ID {plant["ps_id"]}: {plant}")
+
+print("\nFetching real-time data for each plant...\n")
+real_time_data = await plants_api.async_get_realtime_data(plant_ids)
+for plant_id, data in real_time_data.items():
+   print(f"Real-time data for Plant ID {plant_id}: {data}")
 ```
 
 The `Auth` class keeps the access between calls and refreshes it when needed. If you prefer to manage this state yourself, you can create your own subclass of `AbstractAuth`.
