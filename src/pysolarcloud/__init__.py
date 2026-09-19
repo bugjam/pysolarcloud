@@ -16,6 +16,7 @@ class Server(StrEnum):
     International = "https://gateway.isolarcloud.com.hk"
     Europe = "https://gateway.isolarcloud.eu"
     Australia = "https://augateway.isolarcloud.com"
+    India = "https://gateway.isolarcloud.in"
 
 class AbstractAuth(ABC):
     """Abstract class to make authenticated requests.
@@ -47,6 +48,13 @@ class AbstractAuth(ABC):
             case Server.Australia.value:
                 auth_server = "auweb3.isolarcloud.com"
                 cloud_id = 7
+            case Server.India.value:
+                auth_server = "web3.isolarcloud.in"
+                cloud_id = 9
+            case _:
+                raise PySolarCloudException(
+                    f"Unsupported iSolarCloud server: {self.host}"
+                )
         return f"https://{auth_server}/#/authorized-app?cloudId={cloud_id}&applicationId={self.app_id}&redirectUrl={quote_plus(redirect_uri)}"
 
     @abstractmethod
