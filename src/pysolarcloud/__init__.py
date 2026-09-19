@@ -33,7 +33,7 @@ class AbstractAuth(ABC):
         self.access_key = client_secret
         self.app_id = app_id
 
-    def auth_url(self, redirect_uri: str) -> str:
+    def auth_url(self, redirect_uri: str, state: str | None = None) -> str:
         """Return the URL to authorize the user."""
         match self.host:
             case Server.China.value:
@@ -55,7 +55,8 @@ class AbstractAuth(ABC):
                 raise PySolarCloudException(
                     f"Unsupported iSolarCloud server: {self.host}"
                 )
-        return f"https://{auth_server}/#/authorized-app?cloudId={cloud_id}&applicationId={self.app_id}&redirectUrl={quote_plus(redirect_uri)}"
+        state_query = f"?state={quote_plus(state)}" if state is not None else "/"
+        return f"https://{auth_server}{state_query}#/authorized-app?cloudId={cloud_id}&applicationId={self.app_id}&redirectUrl={quote_plus(redirect_uri)}"
 
     @abstractmethod
     async def async_get_access_token(self) -> str:

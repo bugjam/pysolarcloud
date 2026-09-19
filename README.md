@@ -14,7 +14,7 @@ The package supports the following functionality:
 ## Quirks
 The iSolarCloud API is quite new and not very mature. Some tips:
 * The authorisation flow is based on OAuth2 but doesn't work exactly as you would expect
-* The `state` parameter is not passed back after to the authorisation step. This makes it more tricky to resume the flow in a client application.
+* The authorisation page is a single-page application. To have the OAuth2 `state` parameter returned, it must be placed in the URL query before the `#`; `Auth.auth_url(..., state=...)` handles this layout.
 * User is asked to approve the authorisation if the flow is invoked again, e.g. in case the tokens have expired - unlike many OAuth2 implementations who will perform a "silent" authorisation if the user has already approved the access.
 * The API documentation lists a lot of data points which do not seem to be returned from my inverter, it probably varies between models.
 * There are different iSolarCloud servers for different regions, see the `pysolarcloud.Server` enum
@@ -49,13 +49,14 @@ app_key = "your app key"
 secret_key = "your secret key"
 app_id = "your app id"
 redirect_uri = "your redirect uri"
+state = "an opaque value used to resume your flow"
 
 auth = Auth(Server.Europe, app_key, secret_key, app_id)
-url = auth.auth_url(redirect_uri)
+url = auth.auth_url(redirect_uri, state=state)
 ```
 1. Redirect user to `url`
 2. User selects plant(s) and grants authorisation
-3. iSolarCloud will redirect the user to `redirect_uri` with query parameter `code`
+3. iSolarCloud will redirect the user to `redirect_uri` with query parameters `code` and `state`
 ```python
 await auth.async_authorize(code, redirect_uri)
 plants_api = Plants(auth)
